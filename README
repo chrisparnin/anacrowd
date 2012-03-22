@@ -1,0 +1,22 @@
+
+Getting Started.
+
+1) Get a copy of the stackoverflow database (part of stackexchange data dump):
+http://www.clearbits.net/torrents/1881-dec-2011
+
+2) Install mysql.
+
+3) Import into Eclipse and build.
+
+4) Import Data.
+
+java -cp ".:../lib/*" importdb.DBImport ~/data/stackoverflow/122011\ Stack\ Overflow/posts.xml ~/data/stackoverflow/122011\ Stack\ Overflow/users.xml
+java -cp ".:../lib/*" importdb.ImportVotes ~/data/stackoverflow/122011\ Stack\ Overflow/votes.xml
+
+Running Analysis
+
+1a) Build index query cache - Right now a really slow process!
+Run BaseAnalysis.EnsureCacheIsBuilt()
+
+1b) Alternatively, use the serialized version of api traceability.
+http://se.ninlabs.com/exp/crowd/classdoc.tar.gz
