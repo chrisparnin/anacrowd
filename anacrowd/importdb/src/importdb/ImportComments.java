@@ -87,7 +87,7 @@ public class ImportComments
 					int id = Integer.parseInt(attributes.getValue("Id"));  
 				    int postId = Integer.parseInt(attributes.getValue("PostId"));
 				    int score = Integer.parseInt(attributes.getValue("Score"));
-				    String comment = attributes.getValue("Comment");
+				    String comment = attributes.getValue("Text");
 				    String date = attributes.getValue("CreationDate");
 				    String userId = attributes.getValue("UserId");
 				    AddRow
@@ -165,7 +165,7 @@ public class ImportComments
 		// Create Index
 		try
 		{
-			s.execute("create index COMMENTS_PostId_index ON COMMENTS(CommentsId)");
+			s.execute("create index COMMENTS_PostId_index ON COMMENTS(PostId)");
 		}
 		catch(SQLException ex)
 		{
