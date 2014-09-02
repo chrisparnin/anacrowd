@@ -138,7 +138,7 @@ public class DBImport
 //				createBulkPosts = conn.prepareStatement( 
 //						"LOAD DATA INFILE 'C:/Users/cp125/Documents/soPosts.txt' " +
 //						"INTO TABLE POSTS " + 
-//						"FIELDS TERMINATED BY '¶¶' LINES TERMINATED BY 'çç'");
+//						"FIELDS TERMINATED BY 'ï¿½ï¿½' LINES TERMINATED BY 'ï¿½ï¿½'");
 //				
 //				
 //				_fw = new FileWriter("C:/Users/cp125/Documents/soPosts.txt");
@@ -184,7 +184,11 @@ public class DBImport
 			{
 				if( qName.equals("row"))
 				{
-					int id = Integer.parseInt(attributes.getValue("Id"));  
+					int id = Integer.parseInt(attributes.getValue("Id")); 
+					
+					if( attributes.getValue("PostTypeId").trim() == "" )
+						return;
+					
 				    int postType = Integer.parseInt(attributes.getValue("PostTypeId"));
 				          // - 1: Question
 				          // - 2: Answer
@@ -215,7 +219,7 @@ public class DBImport
 							acceptedId, 
 							creationDate,
 							score, 
-							viewCount, 
+							viewCount == null? "0": viewCount, 
 							body, 
 							ownerUserId,
 							lastEditorUserId, 
@@ -293,7 +297,7 @@ public class DBImport
 			{
 				list.add(r);
 			}
-			String rowStr = join(list,"¶¶") + "çç";
+			String rowStr = join(list,"ï¿½ï¿½") + "ï¿½ï¿½";
 			_fw.write(rowStr);
 		}
 		
@@ -427,15 +431,15 @@ public class DBImport
 		try	
 		{
 			Class.forName(driver);
-			conn = DriverManager.getConnection(creationURL, "root", "password");	
-			s = conn.createStatement();
-			s.executeUpdate("DROP DATABASE IF EXISTS " + dbName );
+			//conn = DriverManager.getConnection(creationURL, "root", "password");	
+			//s = conn.createStatement();
+			//s.executeUpdate("DROP DATABASE IF EXISTS " + dbName );
 			
-			s = conn.createStatement();
-			s.executeUpdate("CREATE DATABASE " + dbName);
-			conn.close();
+			//s = conn.createStatement();
+			//s.executeUpdate("CREATE DATABASE " + dbName);
+			//conn.close();
 
-			conn = DriverManager.getConnection(connectionURL, "root", "password");	
+			conn = DriverManager.getConnection(connectionURL, "stackuser", "bacon");	
 
 			// deletes all database tables, and creates them new. Right now this is 
 			// aimed towards a one time data import.
