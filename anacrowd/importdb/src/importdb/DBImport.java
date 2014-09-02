@@ -186,10 +186,15 @@ public class DBImport
 				{
 					int id = Integer.parseInt(attributes.getValue("Id")); 
 					
-					if( attributes.getValue("PostTypeId").trim() == "" )
+					int postType = 0;
+					try
+					{
+						postType = Integer.parseInt(attributes.getValue("PostTypeId"));
+					}
+					catch(NumberFormatException e)
+					{
 						return;
-					
-				    int postType = Integer.parseInt(attributes.getValue("PostTypeId"));
+					}
 				          // - 1: Question
 				          // - 2: Answer
 				    String parentId = attributes.getValue("ParentId"); // (only present if PostTypeId is 2)
