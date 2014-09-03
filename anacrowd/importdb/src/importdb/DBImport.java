@@ -184,7 +184,7 @@ public class DBImport
 			{
 				if( qName.equals("row"))
 				{
-					int id = Integer.parseInt(attributes.getValue("Id")); 
+					int id = Integer.parseInt(attributes.getValue("Id").trim()); 
 					
 					int postType = 0;
 					try
@@ -200,7 +200,16 @@ public class DBImport
 				    String parentId = attributes.getValue("ParentId"); // (only present if PostTypeId is 2)
 				    String acceptedId = attributes.getValue("AcceptedAnswerId"); // (only present if PostTypeId is 1)
 				    String creationDate = attributes.getValue("CreationDate");
-				    int score = Integer.parseInt(attributes.getValue("Score"));
+				    int score = 0;
+				    
+				    try
+				    {
+				    	score = Integer.parseInt(attributes.getValue("Score"));
+				    }
+				    catch(NumberFormatException e)
+				    {
+				    	// Stray data: "b"
+				    }
 				    String viewCount = attributes.getValue("ViewCount");
 				    String body = attributes.getValue("Body");
 				    String ownerUserId = attributes.getValue("OwnerUserId");
@@ -220,11 +229,13 @@ public class DBImport
 					(
 							id, 
 							postType, 
-							parentId, 
+							// spaces in the data.  Why? Example: " 194135"
+							parentId == null? "-1" : parentId.trim(),
 							acceptedId, 
 							creationDate,
 							score, 
-							viewCount == null? "0": viewCount, 
+						    // Data can be messy: e.g. a1806; replace all non-digits
+							viewCount == null? "0": viewCount.replaceAll("\\D+",""),
 							body, 
 							ownerUserId,
 							lastEditorUserId, 
@@ -338,7 +349,13 @@ public class DBImport
 			createPosts.setObject(4, acceptedId == null ? null : Integer.parseInt(acceptedId));		
 			createPosts.setDate(5, new Date(_df.parse(creationDate).getTime()));
 			createPosts.setInt(6, score);
+			try
+			{
 			createPosts.setInt(7, viewCount.equals("") ? 0 : Integer.parseInt(viewCount));
+			}
+			catch (NumberFormatException e){
+				System.out.println(e.getMessage());
+			}
 			createPosts.setString(8, body);
 			createPosts.setInt(9,ownerUserId == null ? -1 : Integer.parseInt(ownerUserId));
 			createPosts.setInt(10, lastEditorUserId == null ? -1 : Integer.parseInt(lastEditorUserId));
