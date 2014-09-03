@@ -184,7 +184,8 @@ public class DBImport
 			{
 				if( qName.equals("row"))
 				{
-					int id = Integer.parseInt(attributes.getValue("Id").trim()); 
+					// More junk in data: For input string: "@8807932"
+					int id = Integer.parseInt(attributes.getValue("Id").trim().replaceAll("\\D+","")); 
 					
 					int postType = 0;
 					try
