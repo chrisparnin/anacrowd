@@ -347,7 +347,8 @@ public class DBImport
 			createPosts.setInt(1, id);
 			createPosts.setInt(2, postType);
 			createPosts.setInt(3, parentId == null ? -1 : Integer.parseInt(parentId));		
-			createPosts.setObject(4, acceptedId == null ? null : Integer.parseInt(acceptedId));		
+			// L1430831
+			createPosts.setObject(4, acceptedId == null ? null : Integer.parseInt(acceptedId.replaceAll("\\D+","")));		
 			createPosts.setDate(5, new Date(_df.parse(creationDate).getTime()));
 			createPosts.setInt(6, score);
 			try
