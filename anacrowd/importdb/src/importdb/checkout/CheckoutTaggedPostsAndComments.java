@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 
 public class CheckoutTaggedPostsAndComments 
@@ -52,7 +53,7 @@ public class CheckoutTaggedPostsAndComments
 		public int ViewCount;
 		public String Tags;
 		public String Title;
-		private String Body;
+		public String Body;
 		//private byte[] compressedBody;
 		public int Score;
 		public int FavoriteCount;
@@ -60,6 +61,48 @@ public class CheckoutTaggedPostsAndComments
 		public Integer AcceptedAnswerId;
 		
 		public List<CommentInfo> Comments = new ArrayList<CommentInfo>();
+	}
+	
+	// Question/Answer
+	public static class Question
+	{
+		public int Id;
+		public int PostTypeId;
+		public int ParentId;
+		public int OwnerUserId;
+		public Date CreationDate;
+		public Date LastActivityDate;
+		public int ViewCount;
+		public String Tags;
+		public String Title;
+		public String Body;
+		public int Score;
+		public int FavoriteCount;
+		public int AnswerCount;
+		public Integer AcceptedAnswerId;
+
+		public List<Answer> Answers = new ArrayList<Answer>();
+		public List<CommentInfo> Comments = new ArrayList<CommentInfo>();		
+	}
+	
+	public static class Answer
+	{
+		public int Id;
+		public int PostTypeId;
+		public int ParentId;
+		public int OwnerUserId;
+		public Date CreationDate;
+		public Date LastActivityDate;
+		public int ViewCount;
+		public String Tags;
+		public String Title;
+		public String Body;
+		public int Score;
+		public int FavoriteCount;
+		public int AnswerCount;
+		public Integer AcceptedAnswerId;
+		
+		public List<CommentInfo> Comments = new ArrayList<CommentInfo>();		
 	}
 	
 	public static class CommentInfo
@@ -71,9 +114,9 @@ public class CheckoutTaggedPostsAndComments
 		public int Score;
 	}
 	
-	public List<PostInfo> Query(String[] searchTags)
+	public List<Question> Query(String[] searchTags)
 	{
-		List<PostInfo> list = new ArrayList<PostInfo>();
+		List<Question> list = new ArrayList<Question>();
 		try
 		{
 			String query = "SELECT * FROM POSTS WHERE " + BuildLikeClauses(searchTags);
@@ -81,16 +124,24 @@ public class CheckoutTaggedPostsAndComments
 			ResultSet set = _commonStatement.executeQuery(query);
 			while( set.next() )
 			{
-				PostInfo post = PopulatePostInfo(set);
+				Question post = PopulateQuestions(set);
 				list.add(post);
 			}
 			set.close();
 			
 			int count= 0;
-			for( PostInfo post : list )
+			for( Question post : list )
 			{
-				PopulateComments(post);
+				post.Comments = PopulateComments(post.Id);
 
+				PopulateAnswers(post.Id);
+
+				
+				for( Answer answer : post.Answers )
+				{
+					answer.Comments = PopulateComments(answer.Id);
+				}
+								
 				if( count % 1000 == 0 )
 				{
 					System.out.println(post.Title);
@@ -107,11 +158,12 @@ public class CheckoutTaggedPostsAndComments
 		return list;
 	}
 	
-	private void PopulateComments(PostInfo post)
+	private List<CommentInfo> PopulateComments(int id)
 	{
+		List<CommentInfo> list = new ArrayList<CommentInfo>();
 		try
 		{
-			ResultSet set = _commonStatement.executeQuery("SELECT * FROM Comments WHERE PostId="+post.Id);
+			ResultSet set = _commonStatement.executeQuery("SELECT * FROM Comments WHERE PostId="+id);
 			while( set.next() )
 			{
 				CommentInfo comment = new CommentInfo();
@@ -121,14 +173,16 @@ public class CheckoutTaggedPostsAndComments
 				comment.UserId = set.getInt("UserId");
 				comment.Id = set.getInt("Id");
 				
-				post.Comments.add(comment);
+				list.add(comment);
 			}
 			set.close();
 		}
 		catch(SQLException ex)
 		{
 			ex.printStackTrace();
+			System.exit(0);
 		}
+		return list;
 	}
 
 	// Case Insensitive
@@ -143,9 +197,9 @@ public class CheckoutTaggedPostsAndComments
 		return join(queryParts, " OR ");
 	}
 
-	private PostInfo PopulatePostInfo(ResultSet set)
+	private Question PopulateQuestions(ResultSet set)
 	{
-		PostInfo info = new PostInfo();
+		Question info = new Question();
 		try
 		{
 			info.Id = set.getInt("Id");
@@ -169,12 +223,41 @@ public class CheckoutTaggedPostsAndComments
 		return info;
 	}
 	
+	public List<Answer> PopulateAnswers(int parentId)
+	{
+		List<Answer> answers = new ArrayList<Answer>();
+		try
+		{
+			ResultSet set = _commonStatement.executeQuery("SELECT Id,PostTypeId,ParentId,OwnerUserId,CreationDate,LastActivityDate,Body,ViewCount,Title FROM POSTS WHERE ParentId = " + parentId);
+			while( set.next() )
+			{
+				Answer info = new Answer();
+				info.Id = set.getInt("Id");
+				info.PostTypeId = set.getInt("PostTypeId");
+				info.OwnerUserId = set.getInt("OwnerUserId");
+				info.CreationDate = set.getDate("CreationDate");
+				info.LastActivityDate = set.getDate("LastActivityDate");
+				info.ViewCount = set.getInt("ViewCount");
+				info.Title = set.getString("Title");
+				info.Body = set.getString("Body");
+			}
+			set.close();
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+			System.exit(0);
+		}
+		return answers;	
+	}
+
+	
 	public static void main (String [] args) 
 	{
 		CheckoutTaggedPostsAndComments checkout = new CheckoutTaggedPostsAndComments();
 		
 		checkout.Init("stackuser", "bacon");
-		List<PostInfo> posts = checkout.Query(new String[]
+		List<Question> posts = checkout.Query(new String[]
 		{
 			"<internet-explorer>", "<ie>","<ie6>","<ie7>","<ie8>","<ie9>","<ie10>","<ie11>"
 		});
