@@ -13,6 +13,8 @@ http://www.clearbits.net/torrents/1881-dec-2011
 java -cp ".:../lib/*" importdb.DBImport ~/data/stackoverflow/122011\ Stack\ Overflow/posts.xml ~/data/stackoverflow/122011\ Stack\ Overflow/users.xml
 java -cp ".:../lib/*" importdb.ImportVotes ~/data/stackoverflow/122011\ Stack\ Overflow/votes.xml
 
+In Windows, use -cp ".;../lib/*".
+
 Running Analysis
 
 1a) Build index query cache - Right now a really slow process!
