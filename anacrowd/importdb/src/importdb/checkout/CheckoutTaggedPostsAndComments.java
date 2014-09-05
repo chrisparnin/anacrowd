@@ -1,5 +1,8 @@
 package importdb.checkout;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -12,6 +15,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 
 public class CheckoutTaggedPostsAndComments 
@@ -120,7 +126,7 @@ public class CheckoutTaggedPostsAndComments
 		try
 		{
 			String query = "SELECT * FROM POSTS WHERE " + BuildLikeClauses(searchTags);
-			System.out.println(query);
+			//System.out.println(query);
 			ResultSet set = _commonStatement.executeQuery(query);
 			while( set.next() )
 			{
@@ -133,21 +139,21 @@ public class CheckoutTaggedPostsAndComments
 			for( Question post : list )
 			{
 				post.Comments = PopulateComments(post.Id);
-
-				PopulateAnswers(post.Id);
-
+				post.Answers = PopulateAnswers(post.Id);
 				
 				for( Answer answer : post.Answers )
 				{
 					answer.Comments = PopulateComments(answer.Id);
 				}
 								
-				if( count % 1000 == 0 )
-				{
-					System.out.println(post.Title);
-					if( post.Comments.size() > 0 )
-						System.out.println(post.Comments.get(0).Comment);
-				}
+				//if( count % 1000 == 0 )
+				//{
+				//	System.out.println(post.Title);
+				//	
+				//	
+				//	if( post.Comments.size() > 0 )
+				//		System.out.println(post.Comments.get(0).Comment);
+				//}
 				count++;
 			}
 		}
@@ -228,7 +234,8 @@ public class CheckoutTaggedPostsAndComments
 		List<Answer> answers = new ArrayList<Answer>();
 		try
 		{
-			ResultSet set = _commonStatement.executeQuery("SELECT Id,PostTypeId,ParentId,OwnerUserId,CreationDate,LastActivityDate,Body,ViewCount,Title FROM POSTS WHERE ParentId = " + parentId);
+			String query = "SELECT Id,PostTypeId,ParentId,OwnerUserId,CreationDate,LastActivityDate,Body,ViewCount,Title FROM POSTS WHERE ParentId = " + parentId;
+			ResultSet set = _commonStatement.executeQuery(query);
 			while( set.next() )
 			{
 				Answer info = new Answer();
@@ -240,6 +247,8 @@ public class CheckoutTaggedPostsAndComments
 				info.ViewCount = set.getInt("ViewCount");
 				info.Title = set.getString("Title");
 				info.Body = set.getString("Body");
+				
+				answers.add(info);
 			}
 			set.close();
 		}
@@ -262,7 +271,21 @@ public class CheckoutTaggedPostsAndComments
 			"<internet-explorer>", "<ie>","<ie6>","<ie7>","<ie8>","<ie9>","<ie10>","<ie11>"
 		});
 		
-		System.out.println("Posts with tags:" + posts.size());
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		
+		try 
+		{
+			PrintWriter writer = new PrintWriter(new FileWriter("IEData.json"));
+			writer.println( gson.toJson(posts));
+			writer.close();
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		//System.out.println(gson.toJson(posts.get(1)));
+		//System.out.println("Posts with tags:" + posts.size());
 	}
 	
 	 static String join(Collection<?> s, String delimiter) {
