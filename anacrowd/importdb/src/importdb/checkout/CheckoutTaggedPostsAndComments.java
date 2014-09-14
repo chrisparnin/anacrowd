@@ -16,6 +16,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -120,17 +123,17 @@ public class CheckoutTaggedPostsAndComments
 		public int Score;
 	}
 	
-	public List<Question> Query(String[] searchTags)
+	public List<Question> Query(String[] searchTags, boolean flattenHtml)
 	{
 		List<Question> list = new ArrayList<Question>();
 		try
 		{
-			String query = "SELECT * FROM POSTS WHERE " + BuildLikeClauses(searchTags);
+			String query = "SELECT * FROM POSTS WHERE " + BuildLikeClauses(searchTags); //+ " LIMIT 100";
 			//System.out.println(query);
 			ResultSet set = _commonStatement.executeQuery(query);
 			while( set.next() )
 			{
-				Question post = PopulateQuestions(set);
+				Question post = PopulateQuestions(set, flattenHtml);
 				list.add(post);
 			}
 			set.close();
@@ -139,7 +142,7 @@ public class CheckoutTaggedPostsAndComments
 			for( Question post : list )
 			{
 				post.Comments = PopulateComments(post.Id);
-				post.Answers = PopulateAnswers(post.Id);
+				post.Answers = PopulateAnswers(post.Id, flattenHtml);
 				
 				for( Answer answer : post.Answers )
 				{
@@ -162,6 +165,12 @@ public class CheckoutTaggedPostsAndComments
 			ex.printStackTrace();
 		}
 		return list;
+	}
+	
+	public String FlattenHtmlToText(String body)
+	{
+		Document doc = Jsoup.parseBodyFragment(body);
+		return doc.text();
 	}
 	
 	private List<CommentInfo> PopulateComments(int id)
@@ -203,7 +212,7 @@ public class CheckoutTaggedPostsAndComments
 		return join(queryParts, " OR ");
 	}
 
-	private Question PopulateQuestions(ResultSet set)
+	private Question PopulateQuestions(ResultSet set, boolean flattenHtml)
 	{
 		Question info = new Question();
 		try
@@ -216,7 +225,14 @@ public class CheckoutTaggedPostsAndComments
 			info.ViewCount = set.getInt("ViewCount");
 			info.Tags = set.getString("Tags");
 			info.Title = set.getString("Title");
-			info.Body = set.getString("Body");
+			if( flattenHtml )
+			{
+				info.Body = FlattenHtmlToText(set.getString("Body"));
+			}
+			else
+			{
+				info.Body = set.getString("Body");
+			}
 			info.Score = set.getInt("Score");
 			info.FavoriteCount = set.getInt("FavoriteCount");
 			info.AnswerCount = set.getInt("AnswerCount");
@@ -229,7 +245,7 @@ public class CheckoutTaggedPostsAndComments
 		return info;
 	}
 	
-	public List<Answer> PopulateAnswers(int parentId)
+	public List<Answer> PopulateAnswers(int parentId, boolean flattenHtml)
 	{
 		List<Answer> answers = new ArrayList<Answer>();
 		try
@@ -246,7 +262,14 @@ public class CheckoutTaggedPostsAndComments
 				info.LastActivityDate = set.getDate("LastActivityDate");
 				info.ViewCount = set.getInt("ViewCount");
 				info.Title = set.getString("Title");
-				info.Body = set.getString("Body");
+				if( flattenHtml )
+				{
+					info.Body = FlattenHtmlToText(set.getString("Body"));
+				}
+				else
+				{
+					info.Body = set.getString("Body");
+				}
 				
 				answers.add(info);
 			}
@@ -268,8 +291,8 @@ public class CheckoutTaggedPostsAndComments
 		checkout.Init("stackuser", "bacon");
 		List<Question> posts = checkout.Query(new String[]
 		{
-			"<internet-explorer>", "<ie>","<ie6>","<ie7>","<ie8>","<ie9>","<ie10>","<ie11>"
-		});
+			"<internet-explorer>", "<ie>","<ie6>","<ie7>","<ie8>","<ie9>","<ie10>","<ie11>",
+		}, true);
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		
